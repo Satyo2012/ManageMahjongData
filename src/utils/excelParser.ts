@@ -28,8 +28,12 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         })
 
         const headerRow = raw[0] as (string | null)[]
+        // テンプレートバージョンによってプレイヤー名の開始列が異なる
+        // 古いテンプレート: 列C(index 2)から、新しいテンプレート: 列D(index 3)から
+        const playerColOffset =
+          headerRow[2] && typeof headerRow[2] === 'string' && headerRow[2].trim() ? 2 : 3
         const players: string[] = []
-        for (let col = 3; col < headerRow.length - 1; col += 3) {
+        for (let col = playerColOffset; col < headerRow.length; col += 3) {
           const name = headerRow[col]
           if (name && typeof name === 'string' && name.trim()) {
             players.push(name.trim())
@@ -54,7 +58,7 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
           let hasData = false
 
           players.forEach((playerName, idx) => {
-            const baseCol = 3 + idx * 3
+            const baseCol = playerColOffset + idx * 3
             const rank = row[baseCol]
             const points = row[baseCol + 1]
             const score = row[baseCol + 2]
