@@ -36,9 +36,27 @@ export interface PlayerStats {
 }
 
 export interface MahjongData {
+  id: string
   games: Game[]
   players: string[]
   stats: Record<string, PlayerStats>
   fileName: string
   date?: string
+}
+
+export interface HeadToHeadStats {
+  playerA: string
+  playerB: string
+  totalGames: number
+  playerAWins: number
+  playerBWins: number
+  playerAWinRate: number
+  playerBWinRate: number
+  playerAAvgRank: number
+  playerBAvgRank: number
+  playerAAvgScore: number
+  playerBAvgScore: number
+  playerAFirstCount: number
+  playerBFirstCount: number
+  games: Game[]
 }

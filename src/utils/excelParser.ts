@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx'
-import type { Game, MahjongData, PlayerStats } from '../types'
+import type { Game, MahjongData, PlayerStats, HeadToHeadStats } from '../types'
+import { generateId } from './storage'
 
 function extractDateFromFileName(name: string): string | undefined {
   const match = name.match(/(\d{8})/)
@@ -16,14 +17,12 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         const data = new Uint8Array(e.target!.result as ArrayBuffer)
         const wb = XLSX.read(data, { type: 'array' })
 
-        // Use first sheet
         const ws = wb.Sheets[wb.SheetNames[0]]
         const raw: (string | number | null)[][] = XLSX.utils.sheet_to_json(ws, {
           header: 1,
           defval: null,
         })
 
-        // Row 0: player names at cols 3, 6, 9, 12 ... (every 3)
         const headerRow = raw[0] as (string | null)[]
         const players: string[] = []
         for (let col = 3; col < headerRow.length - 1; col += 3) {
@@ -35,14 +34,12 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
           }
         }
 
-        // Data rows start at index 2
         const games: Game[] = []
         for (let i = 2; i < raw.length; i++) {
           const row = raw[i] as (string | number | null)[]
           const gameNo = row[0]
           if (gameNo === null || gameNo === undefined) continue
 
-          // Skip rows marked with "-" (check columns)
           const check1 = row[1]
           if (check1 === '-' || check1 === null) continue
 
@@ -77,7 +74,7 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         const stats = computeStats(players, games)
         const date = extractDateFromFileName(file.name)
 
-        resolve({ games, players, stats, fileName: file.name, date })
+        resolve({ id: generateId(), games, players, stats, fileName: file.name, date })
       } catch (err) {
         reject(err)
       }
@@ -87,7 +84,7 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
   })
 }
 
-function computeStats(players: string[], games: Game[]): Record<string, PlayerStats> {
+export function computeStats(players: string[], games: Game[]): Record<string, PlayerStats> {
   const stats: Record<string, PlayerStats> = {}
 
   for (const name of players) {
@@ -169,7 +166,7 @@ function computeStats(players: string[], games: Game[]): Record<string, PlayerSt
 
 export function mergeData(datasets: MahjongData[]): MahjongData {
   if (datasets.length === 0) {
-    return { games: [], players: [], stats: {}, fileName: '' }
+    return { id: 'merged', games: [], players: [], stats: {}, fileName: '' }
   }
 
   const allPlayers = [...new Set(datasets.flatMap((d) => d.players))]
@@ -178,9 +175,65 @@ export function mergeData(datasets: MahjongData[]): MahjongData {
   const stats = computeStats(allPlayers, allGames)
 
   return {
+    id: 'merged',
     games: allGames,
     players: allPlayers,
     stats,
     fileName: datasets.map((d) => d.fileName).join(', '),
+  }
+}
+
+export function computeHeadToHead(
+  playerA: string,
+  playerB: string,
+  games: Game[],
+): HeadToHeadStats {
+  const h2hGames = games.filter((g) => g.players[playerA] && g.players[playerB])
+  const totalGames = h2hGames.length
+
+  let playerAWins = 0
+  let playerBWins = 0
+  let playerAFirstCount = 0
+  let playerBFirstCount = 0
+
+  for (const game of h2hGames) {
+    const rankA = game.players[playerA].rank
+    const rankB = game.players[playerB].rank
+    if (rankA < rankB) playerAWins++
+    else if (rankB < rankA) playerBWins++
+
+    if (rankA === 1) playerAFirstCount++
+    if (rankB === 1) playerBFirstCount++
+  }
+
+  const avgRank = (player: string) =>
+    totalGames > 0
+      ? Math.round(
+          (h2hGames.reduce((a, g) => a + g.players[player].rank, 0) / totalGames) * 100,
+        ) / 100
+      : 0
+
+  const avgScore = (player: string) =>
+    totalGames > 0
+      ? Math.round(
+          (h2hGames.reduce((a, g) => a + g.players[player].score, 0) / totalGames) * 100,
+        ) / 100
+      : 0
+
+  return {
+    playerA,
+    playerB,
+    totalGames,
+    playerAWins,
+    playerBWins,
+    playerAWinRate: totalGames > 0 ? Math.round((playerAWins / totalGames) * 1000) / 10 : 0,
+    playerBWinRate: totalGames > 0 ? Math.round((playerBWins / totalGames) * 1000) / 10 : 0,
+    playerAAvgRank: avgRank(playerA),
+    playerBAvgRank: avgRank(playerB),
+    playerAAvgScore: avgScore(playerA),
+    playerBAvgScore: avgScore(playerB),
+    playerAFirstCount,
+    playerBFirstCount,
+    games: h2hGames,
   }
 }
