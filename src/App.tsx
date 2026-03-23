@@ -11,6 +11,7 @@ import {
   saveNameAliases,
   type StoredBook,
 } from './utils/storage'
+import { fetchSharedData, exportSharedJson } from './utils/jsonExport'
 import type { MahjongData, NameAliasMap } from './types'
 import { BookManager } from './components/BookManager'
 import { NameSettings } from './components/NameSettings'
@@ -19,7 +20,7 @@ import { PlayerDetail } from './pages/PlayerDetail'
 import { GamesPage } from './pages/GamesPage'
 import { HeadToHead } from './pages/HeadToHead'
 import { MonthlyStats } from './pages/MonthlyStats'
-import { LayoutDashboard, List, Upload, Loader2, Swords, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, List, Upload, Loader2, Swords, BarChart2, Share2 } from 'lucide-react'
 
 type Tab = 'dashboard' | 'games' | 'h2h' | 'monthly' | 'upload'
 type View = { tab: Tab; player?: string }
@@ -42,13 +43,25 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>({ tab: 'upload' })
+  const [remoteLoaded, setRemoteLoaded] = useState(false)
 
   useEffect(() => {
-    const stored = loadStoredBooks()
-    const aliases = loadNameAliases()
-    setBooks(stored)
-    setNameAliases(aliases)
-    if (stored.length > 0) setView({ tab: 'dashboard' })
+    // /data.json が存在すれば共有データとして優先ロード
+    fetchSharedData().then((remote) => {
+      if (remote) {
+        setBooks(remote.books)
+        setNameAliases(remote.nameAliases)
+        setRemoteLoaded(true)
+        setView({ tab: 'dashboard' })
+      } else {
+        // ローカル保存データにフォールバック
+        const stored = loadStoredBooks()
+        const aliases = loadNameAliases()
+        setBooks(stored)
+        setNameAliases(aliases)
+        if (stored.length > 0) setView({ tab: 'dashboard' })
+      }
+    })
   }, [])
 
   const datasets = booksToMahjongData(books)
@@ -128,6 +141,11 @@ export default function App() {
                 </p>
               )}
             </div>
+            {remoteLoaded && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-900/40 border border-emerald-700/50 text-emerald-400 text-xs">
+                <Share2 className="w-3 h-3" />共有データ
+              </span>
+            )}
           </div>
 
           <nav className="flex gap-1 ml-auto flex-wrap justify-end">
@@ -194,12 +212,31 @@ export default function App() {
             />
             <NameSettings books={books} aliases={nameAliases} onSave={handleSaveAliases} />
             {hasData && (
-              <p className="text-center text-slate-500 text-sm">
-                現在{books.length}ブック / {merged?.games.length}局 読み込み済 —{' '}
-                <button onClick={() => setView({ tab: 'dashboard' })} className="text-[#d4af37] hover:underline">
-                  ダッシュボードへ
-                </button>
-              </p>
+              <>
+                <p className="text-center text-slate-500 text-sm">
+                  現在{books.length}ブック / {merged?.games.length}局 読み込み済 —{' '}
+                  <button onClick={() => setView({ tab: 'dashboard' })} className="text-[#d4af37] hover:underline">
+                    ダッシュボードへ
+                  </button>
+                </p>
+                {/* 管理者向け: 共有データ書き出し */}
+                <div className="card p-4 border-emerald-800/40 bg-emerald-900/10">
+                  <p className="text-sm font-semibold text-emerald-400 mb-1 flex items-center gap-2">
+                    <Share2 className="w-4 h-4" />共有データの更新（管理者向け）
+                  </p>
+                  <p className="text-xs text-slate-400 mb-3">
+                    現在読み込まれているデータを <code className="text-emerald-300">data.json</code> として書き出し、
+                    リポジトリの <code className="text-emerald-300">public/</code> フォルダに置いて git push すると全員に反映されます。
+                  </p>
+                  <button
+                    onClick={() => exportSharedJson(books, nameAliases)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-emerald-700 hover:bg-emerald-600 text-white transition-colors"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    data.json をダウンロード
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}
