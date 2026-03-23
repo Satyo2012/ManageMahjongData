@@ -35,6 +35,17 @@ export interface PlayerStats {
   gameIndices: number[]
 }
 
+/** ブック境界（時系列グラフ用）*/
+export interface BookBoundary {
+  /** merged games 配列における 0-based の開始インデックス */
+  startIndex: number
+  date: string
+  fileName: string
+}
+
+/** 名前の表記ゆれ正規化マップ: rawName → canonicalName */
+export type NameAliasMap = Record<string, string>
+
 export interface MahjongData {
   id: string
   games: Game[]
@@ -42,6 +53,7 @@ export interface MahjongData {
   stats: Record<string, PlayerStats>
   fileName: string
   date?: string
+  bookBoundaries: BookBoundary[]
 }
 
 export interface HeadToHeadStats {

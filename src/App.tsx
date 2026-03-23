@@ -6,10 +6,14 @@ import {
   addBook,
   removeBook,
   replaceBook,
+  clearAllBooks,
+  loadNameAliases,
+  saveNameAliases,
   type StoredBook,
 } from './utils/storage'
-import type { MahjongData } from './types'
+import type { MahjongData, NameAliasMap } from './types'
 import { BookManager } from './components/BookManager'
+import { NameSettings } from './components/NameSettings'
 import { Dashboard } from './pages/Dashboard'
 import { PlayerDetail } from './pages/PlayerDetail'
 import { GamesPage } from './pages/GamesPage'
@@ -29,12 +33,14 @@ function booksToMahjongData(books: StoredBook[]): MahjongData[] {
       stats,
       fileName: book.fileName,
       date: book.date,
+      bookBoundaries: [],
     }
   })
 }
 
 export default function App() {
   const [books, setBooks] = useState<StoredBook[]>([])
+  const [nameAliases, setNameAliases] = useState<NameAliasMap>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>({ tab: 'upload' })
@@ -42,14 +48,15 @@ export default function App() {
   // localStorage から初期ロード
   useEffect(() => {
     const stored = loadStoredBooks()
+    const aliases = loadNameAliases()
     setBooks(stored)
-    if (stored.length > 0) {
-      setView({ tab: 'dashboard' })
-    }
+    setNameAliases(aliases)
+    if (stored.length > 0) setView({ tab: 'dashboard' })
   }, [])
 
   const datasets = booksToMahjongData(books)
-  const merged = datasets.length > 0 ? mergeData(datasets) : null
+  // 名前エイリアスを適用してマージ（日付順ソート含む）
+  const merged = datasets.length > 0 ? mergeData(datasets, nameAliases) : null
   const hasData = merged !== null && merged.games.length > 0
 
   const handleAddBook = useCallback(
@@ -65,21 +72,12 @@ export default function App() {
           games: result.games,
           players: result.players,
         }
-
         setBooks((prev) => {
-          let next: StoredBook[]
-          if (overwrite) {
-            next = replaceBook(prev, newBook)
-          } else {
-            next = addBook(prev, newBook)
-          }
+          const next = overwrite ? replaceBook(prev, newBook) : addBook(prev, newBook)
           saveBooks(next)
           return next
         })
-
-        if (view.tab === 'upload') {
-          setView({ tab: 'dashboard' })
-        }
+        if (view.tab === 'upload') setView({ tab: 'dashboard' })
       } catch (e) {
         setError('Excelファイルの読み込みに失敗しました。形式を確認してください。')
         console.error(e)
@@ -93,11 +91,20 @@ export default function App() {
   const handleRemoveBook = useCallback((id: string) => {
     setBooks((prev) => {
       const next = removeBook(prev, id)
-      if (next.length === 0) {
-        setView({ tab: 'upload' })
-      }
+      if (next.length === 0) setView({ tab: 'upload' })
       return next
     })
+  }, [])
+
+  const handleClearAll = useCallback(() => {
+    clearAllBooks()
+    setBooks([])
+    setView({ tab: 'upload' })
+  }, [])
+
+  const handleSaveAliases = useCallback((aliases: NameAliasMap) => {
+    saveNameAliases(aliases)
+    setNameAliases(aliases)
   }, [])
 
   return (
@@ -198,19 +205,27 @@ export default function App() {
             <div className="text-center">
               <span className="text-6xl">🀄</span>
               <h2 className="text-2xl font-bold mt-4 text-[#d4af37]">麻雀成績管理システム</h2>
-              <p className="text-slate-400 mt-2">
-                麻雀集計表Excelファイルをアップロードしてください
-              </p>
+              <p className="text-slate-400 mt-2">麻雀集計表Excelファイルをアップロードしてください</p>
               <p className="text-slate-500 text-sm mt-1">
                 データはブラウザに保存されるので、次回以降も継続して利用できます
               </p>
             </div>
+
             <BookManager
               books={books}
               onAddBook={handleAddBook}
               onRemoveBook={handleRemoveBook}
+              onClearAll={handleClearAll}
               loading={loading}
             />
+
+            {/* 名前の表記ゆれ設定 */}
+            <NameSettings
+              books={books}
+              aliases={nameAliases}
+              onSave={handleSaveAliases}
+            />
+
             {hasData && (
               <p className="text-center text-slate-500 text-sm">
                 現在{books.length}ブック / {merged?.games.length}局 読み込み済 —{' '}

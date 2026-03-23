@@ -1,11 +1,15 @@
 import * as XLSX from 'xlsx'
-import type { Game, MahjongData, PlayerStats, HeadToHeadStats } from '../types'
+import type { Game, MahjongData, PlayerStats, HeadToHeadStats, NameAliasMap, BookBoundary } from '../types'
 import { generateId } from './storage'
 
-function extractDateFromFileName(name: string): string | undefined {
+export function extractDateFromFileName(name: string): string | undefined {
   const match = name.match(/(\d{8})/)
   if (!match) return undefined
   const d = match[1]
+  // 簡易バリデーション: 月・日が妥当な範囲か
+  const month = parseInt(d.slice(4, 6), 10)
+  const day = parseInt(d.slice(6, 8), 10)
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined
   return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
 }
 
@@ -34,7 +38,9 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
           }
         }
 
+        const date = extractDateFromFileName(file.name)
         const games: Game[] = []
+
         for (let i = 2; i < raw.length; i++) {
           const row = raw[i] as (string | number | null)[]
           const gameNo = row[0]
@@ -65,6 +71,7 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
           if (hasData) {
             games.push({
               gameNo: Number(gameNo),
+              date,          // ← ファイル名から抽出した日付をゲームにも付与
               fileName: file.name,
               players: gamePlayers,
             })
@@ -72,9 +79,16 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         }
 
         const stats = computeStats(players, games)
-        const date = extractDateFromFileName(file.name)
 
-        resolve({ id: generateId(), games, players, stats, fileName: file.name, date })
+        resolve({
+          id: generateId(),
+          games,
+          players,
+          stats,
+          fileName: file.name,
+          date,
+          bookBoundaries: [],
+        })
       } catch (err) {
         reject(err)
       }
@@ -164,22 +178,55 @@ export function computeStats(players: string[], games: Game[]): Record<string, P
   return stats
 }
 
-export function mergeData(datasets: MahjongData[]): MahjongData {
+/** 名前エイリアスをゲームリストに適用する */
+function applyNameAliases(games: Game[], aliases: NameAliasMap): Game[] {
+  if (Object.keys(aliases).length === 0) return games
+  return games.map((game) => ({
+    ...game,
+    players: Object.fromEntries(
+      Object.entries(game.players).map(([name, result]) => [aliases[name] ?? name, result]),
+    ),
+  }))
+}
+
+export function mergeData(datasets: MahjongData[], nameAliases: NameAliasMap = {}): MahjongData {
   if (datasets.length === 0) {
-    return { id: 'merged', games: [], players: [], stats: {}, fileName: '' }
+    return { id: 'merged', games: [], players: [], stats: {}, fileName: '', bookBoundaries: [] }
   }
 
-  const allPlayers = [...new Set(datasets.flatMap((d) => d.players))]
-  const allGames = datasets.flatMap((d) => d.games)
+  // 日付昇順でソート（日付なしは末尾）
+  const sorted = [...datasets].sort((a, b) => {
+    if (!a.date && !b.date) return 0
+    if (!a.date) return 1
+    if (!b.date) return -1
+    return a.date.localeCompare(b.date)
+  })
 
-  const stats = computeStats(allPlayers, allGames)
+  // ブック境界を計算
+  const bookBoundaries: BookBoundary[] = []
+  let offset = 0
+  for (const dataset of sorted) {
+    bookBoundaries.push({
+      startIndex: offset,
+      date: dataset.date ?? '日付不明',
+      fileName: dataset.fileName,
+    })
+    offset += dataset.games.length
+  }
+
+  const rawGames = sorted.flatMap((d) => d.games)
+  const games = applyNameAliases(rawGames, nameAliases)
+
+  const allPlayers = [...new Set(games.flatMap((g) => Object.keys(g.players)))]
+  const stats = computeStats(allPlayers, games)
 
   return {
     id: 'merged',
-    games: allGames,
+    games,
     players: allPlayers,
     stats,
-    fileName: datasets.map((d) => d.fileName).join(', '),
+    fileName: sorted.map((d) => d.fileName).join(', '),
+    bookBoundaries,
   }
 }
 
@@ -201,23 +248,18 @@ export function computeHeadToHead(
     const rankB = game.players[playerB].rank
     if (rankA < rankB) playerAWins++
     else if (rankB < rankA) playerBWins++
-
     if (rankA === 1) playerAFirstCount++
     if (rankB === 1) playerBFirstCount++
   }
 
   const avgRank = (player: string) =>
     totalGames > 0
-      ? Math.round(
-          (h2hGames.reduce((a, g) => a + g.players[player].rank, 0) / totalGames) * 100,
-        ) / 100
+      ? Math.round((h2hGames.reduce((a, g) => a + g.players[player].rank, 0) / totalGames) * 100) / 100
       : 0
 
   const avgScore = (player: string) =>
     totalGames > 0
-      ? Math.round(
-          (h2hGames.reduce((a, g) => a + g.players[player].score, 0) / totalGames) * 100,
-        ) / 100
+      ? Math.round((h2hGames.reduce((a, g) => a + g.players[player].score, 0) / totalGames) * 100) / 100
       : 0
 
   return {

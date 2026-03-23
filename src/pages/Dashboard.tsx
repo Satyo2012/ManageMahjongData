@@ -1,6 +1,6 @@
 import type { MahjongData } from '../types'
 import { PlayerCard } from '../components/PlayerCard'
-import { ScoreLineChart } from '../components/ScoreLineChart'
+import { ScoreTimelineChart } from '../components/ScoreTimelineChart'
 import { StatCard } from '../components/StatCard'
 import { Trophy, TrendingUp, Users, Gamepad2 } from 'lucide-react'
 
@@ -18,6 +18,7 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
   const leader = statsArr[0]
   const totalGames = data.games.length
   const activePlayers = statsArr.length
+  const bookCount = data.bookBoundaries.length
 
   return (
     <div className="space-y-6">
@@ -26,7 +27,7 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
         <StatCard
           label="総対局数"
           value={totalGames}
-          sub={`${data.fileName.split(',').length}ファイル`}
+          sub={`${bookCount}ブック`}
           color="gold"
         />
         <StatCard label="参加プレイヤー" value={`${activePlayers}名`} color="blue" />
@@ -48,14 +49,26 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
         )}
       </div>
 
-      {/* Cumulative Score Chart */}
+      {/* 累積スコア推移（共有タイムライン） */}
       {statsArr.length > 0 && (
         <div className="card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-[#d4af37]" />
-            <h2 className="font-bold text-lg">累積スコア推移</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-[#d4af37]" />
+              <h2 className="font-bold text-lg">累積スコア推移</h2>
+            </div>
+            {bookCount > 1 && (
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <span className="inline-block w-6 h-px border-t border-dashed border-[#d4af37] opacity-70" />
+                = ブック境界
+              </span>
+            )}
           </div>
-          <ScoreLineChart players={statsArr} />
+          <ScoreTimelineChart
+            games={data.games}
+            playerNames={statsArr.map((s) => s.name)}
+            bookBoundaries={data.bookBoundaries}
+          />
         </div>
       )}
 
@@ -110,11 +123,7 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
                     {s.name}
                   </td>
                   <td className="py-2 px-2 text-center text-slate-300">{s.games}</td>
-                  <td
-                    className={`py-2 px-2 text-center font-mono font-semibold ${
-                      s.totalScore > 0 ? 'text-emerald-400' : s.totalScore < 0 ? 'text-red-400' : 'text-slate-300'
-                    }`}
-                  >
+                  <td className={`py-2 px-2 text-center font-mono font-semibold ${s.totalScore > 0 ? 'text-emerald-400' : s.totalScore < 0 ? 'text-red-400' : 'text-slate-300'}`}>
                     {s.totalScore > 0 ? '+' : ''}{s.totalScore.toFixed(1)}
                   </td>
                   <td className="py-2 px-2 text-center text-slate-300">{s.avgRank.toFixed(2)}</td>
