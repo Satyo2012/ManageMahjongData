@@ -44,10 +44,11 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         for (let i = 2; i < raw.length; i++) {
           const row = raw[i] as (string | number | null)[]
           const gameNo = row[0]
-          if (gameNo === null || gameNo === undefined) continue
+          if (gameNo === null || gameNo === undefined || typeof gameNo !== 'number') continue
 
+          // '-' は小計・合計行などのセパレータ行なのでスキップ
           const check1 = row[1]
-          if (check1 === '-' || check1 === null) continue
+          if (check1 === '-') continue
 
           const gamePlayers: Record<string, { rank: number; points: number; score: number }> = {}
           let hasData = false
@@ -79,11 +80,13 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         }
 
         const stats = computeStats(players, games)
+        // テンプレート行など実際の対局データがないプレイヤーを除外
+        const activePlayers = players.filter((p) => (stats[p]?.games ?? 0) > 0)
 
         resolve({
           id: generateId(),
           games,
-          players,
+          players: activePlayers,
           stats,
           fileName: file.name,
           date,

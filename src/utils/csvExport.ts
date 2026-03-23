@@ -42,7 +42,7 @@ export function exportStatsCsv(data: MahjongData) {
     .sort((a, b) => data.stats[b].totalScore - data.stats[a].totalScore)
   const headers = [
     'プレイヤー', '対局数', '合計PT', '平均PT', '平均着順',
-    '1着率', '2着率', '3着率', '4着率', 'トップ率', '飛び率',
+    '1着率', '2着率', '3着率', '4着率', '連帯率', '飛び率',
   ]
   const rows: unknown[][] = ps.map((p) => {
     const s = data.stats[p]

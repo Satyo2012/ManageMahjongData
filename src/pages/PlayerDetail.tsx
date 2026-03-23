@@ -75,7 +75,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
           color={stats.avgScore > 0 ? 'green' : 'red'}
         />
         <StatCard
-          label="トップ率"
+          label="連帯率"
           value={`${stats.topRate.toFixed(1)}%`}
           sub={`1着${stats.firstRate.toFixed(1)}% / 2着${stats.secondRate.toFixed(1)}%`}
           color="gold"
