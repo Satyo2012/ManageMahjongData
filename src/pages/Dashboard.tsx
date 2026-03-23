@@ -208,7 +208,6 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
                 <th className="text-center py-2 px-2">2着</th>
                 <th className="text-center py-2 px-2">3着</th>
                 <th className="text-center py-2 px-2">4着</th>
-                <th className="text-center py-2 px-2">トップ率</th>
                 <th className="text-center py-2 px-2">飛び率</th>
               </tr>
             </thead>
@@ -232,7 +231,6 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
                   <td className="py-2 px-2 text-center text-slate-300">{s.secondRate.toFixed(1)}%</td>
                   <td className="py-2 px-2 text-center text-amber-600">{s.thirdRate.toFixed(1)}%</td>
                   <td className="py-2 px-2 text-center text-red-400">{s.fourthRate.toFixed(1)}%</td>
-                  <td className="py-2 px-2 text-center text-blue-400">{s.topRate.toFixed(1)}%</td>
                   <td className="py-2 px-2 text-center text-purple-400">{s.flyingRate.toFixed(1)}%</td>
                 </tr>
               ))}
