@@ -15,11 +15,16 @@ const PLAYER_COLORS = [
   '#e879f9', '#22d3ee', '#fbbf24', '#86efac',
 ]
 
-const RANK_COLORS: Record<number, string> = {
-  1: '#d4af37',
-  2: '#94a3b8',
-  3: '#b45309',
-  4: '#dc2626',
+/** データ内の最小〜最大着順を [0,1] に正規化して緑→赤グラデーションを返す */
+function rankToColor(avgRank: number, minRank: number, maxRank: number) {
+  const range = maxRank - minRank
+  const t = range > 0.001 ? Math.max(0, Math.min(1, (avgRank - minRank) / range)) : 0.5
+  const hue = Math.round(120 * (1 - t)) // 120=緑(良) → 0=赤(悪)
+  return {
+    text: `hsl(${hue}, 85%, 60%)`,
+    bg: `hsla(${hue}, 85%, 45%, 0.25)`,
+    border: `hsla(${hue}, 85%, 55%, 0.6)`,
+  }
 }
 
 type ViewMode = 'monthly' | 'heatmap'
@@ -92,6 +97,16 @@ export function MonthlyStats({ data }: Props) {
       }
     })
   }, [data.bookBoundaries, data.games, activePlayers])
+
+  // ヒートマップ用: データ内の実際の着順レンジを取得して色の幅を最大化
+  const rankRange = useMemo(() => {
+    const all = heatmapData.flatMap((s) =>
+      activePlayers.map((p) => s.playerStats[p]?.avgRank).filter((v): v is number => v !== undefined),
+    )
+    return all.length > 0
+      ? { min: Math.min(...all), max: Math.max(...all) }
+      : { min: 1, max: 4 }
+  }, [heatmapData, activePlayers])
 
   const metricLabel = { avgScore: '平均スコア', avgRank: '平均着順', firstRate: '1着率' }[metric]
 
@@ -239,16 +254,15 @@ export function MonthlyStats({ data }: Props) {
             <Grid3x3 className="w-5 h-5 text-[#d4af37]" />
             <h2 className="font-bold text-lg">セッション別着順ヒートマップ</h2>
           </div>
-          <p className="text-xs text-slate-500 mb-4">
-            各セッション（ブック）でのプレイヤー平均着順を色で表示
-            <span className="ml-3 gap-2 inline-flex items-center">
-              {[1, 2, 3, 4].map((r) => (
-                <span key={r} className="inline-flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-sm inline-block" style={{ backgroundColor: RANK_COLORS[r] }} />
-                  <span className="text-xs">{r}着</span>
-                </span>
-              ))}
-              <span className="inline-flex items-center gap-1">
+          <p className="text-xs text-slate-500 mb-4 flex items-center gap-3 flex-wrap">
+            <span>各セッション（ブック）でのプレイヤー平均着順を色で表示</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-[10px] text-slate-400">良({rankRange.min.toFixed(1)})</span>
+              <span className="w-16 h-3 rounded-sm inline-block" style={{
+                background: 'linear-gradient(to right, hsl(120,85%,55%), hsl(60,85%,55%), hsl(0,85%,55%))'
+              }} />
+              <span className="text-[10px] text-slate-400">悪({rankRange.max.toFixed(1)})</span>
+              <span className="inline-flex items-center gap-1 ml-2">
                 <span className="w-3 h-3 rounded-sm inline-block bg-[#1e2d3d] border border-[#2d4a6a]" />
                 <span className="text-xs">不参加</span>
               </span>
@@ -290,17 +304,16 @@ export function MonthlyStats({ data }: Props) {
                           </td>
                         )
                       }
-                      const rank = Math.round(ps.avgRank)
-                      const bg = RANK_COLORS[Math.min(4, Math.max(1, rank))]
+                      const color = rankToColor(ps.avgRank, rankRange.min, rankRange.max)
                       const scoreStr = `${ps.totalScore > 0 ? '+' : ''}${ps.totalScore.toFixed(1)}`
                       return (
                         <td key={i} className="p-0.5" title={`${player} @ ${session.label}\n平均着順: ${ps.avgRank.toFixed(2)}\n合計スコア: ${scoreStr}\n対局数: ${ps.games}`}>
                           <div
                             className="w-[44px] h-[32px] rounded flex flex-col items-center justify-center cursor-default transition-transform hover:scale-110"
-                            style={{ backgroundColor: bg + '55', border: `1px solid ${bg}88` }}
+                            style={{ backgroundColor: color.bg, border: `1px solid ${color.border}` }}
                           >
-                            <span className="font-bold" style={{ color: bg }}>{ps.avgRank.toFixed(1)}</span>
-                            <span className="text-[9px] opacity-70" style={{ color: bg }}>{scoreStr}</span>
+                            <span className="font-bold" style={{ color: color.text }}>{ps.avgRank.toFixed(1)}</span>
+                            <span className="text-[9px] opacity-70" style={{ color: color.text }}>{scoreStr}</span>
                           </div>
                         </td>
                       )
