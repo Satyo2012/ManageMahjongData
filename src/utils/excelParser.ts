@@ -43,11 +43,11 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         const players: string[] = []
         for (let col = playerColOffset; col < headerRow.length; col += 3) {
           const name = headerRow[col]
-          if (name && typeof name === 'string' && name.trim()) {
-            players.push(name.trim())
-          } else {
-            break
-          }
+          if (!name || typeof name !== 'string' || !name.trim()) break
+          // サブヘッダー行に「順位」がない列は集計列などのため除外
+          const subCell = subHeaderRow[col]
+          if (!subCell || typeof subCell !== 'string' || !subCell.includes('順位')) break
+          players.push(name.trim())
         }
 
         const date = extractDateFromFileName(file.name)
