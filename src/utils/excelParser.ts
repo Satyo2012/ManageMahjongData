@@ -28,10 +28,18 @@ export function parseExcelFile(file: File): Promise<MahjongData> {
         })
 
         const headerRow = raw[0] as (string | null)[]
-        // テンプレートバージョンによってプレイヤー名の開始列が異なる
-        // 古いテンプレート: 列C(index 2)から、新しいテンプレート: 列D(index 3)から
-        const playerColOffset =
-          headerRow[2] && typeof headerRow[2] === 'string' && headerRow[2].trim() ? 2 : 3
+        const subHeaderRow = (raw[1] ?? []) as (string | null)[]
+        // サブヘッダー行（2行目）で「順位」が最初に現れる列でオフセットを検出
+        // 古いテンプレート: index 2 が「順位」→ offset=2
+        // 新しいテンプレート: index 3 が「順位」→ offset=3
+        let playerColOffset = 3 // デフォルト
+        for (let col = 2; col <= 4; col++) {
+          const cell = subHeaderRow[col]
+          if (cell && typeof cell === 'string' && cell.includes('順位')) {
+            playerColOffset = col
+            break
+          }
+        }
         const players: string[] = []
         for (let col = playerColOffset; col < headerRow.length; col += 3) {
           const name = headerRow[col]
