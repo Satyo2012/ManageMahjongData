@@ -1,14 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ReferenceLine,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ReferenceLine, ResponsiveContainer,
 } from 'recharts'
 import type { Game, BookBoundary } from '../types'
 
@@ -25,19 +18,31 @@ const PLAYER_COLORS = [
   '#e879f9', '#22d3ee', '#fbbf24', '#86efac',
 ]
 
+function linearRegression(xs: number[], ys: number[]) {
+  const n = xs.length
+  if (n < 2) return null
+  const sx = xs.reduce((a, b) => a + b, 0)
+  const sy = ys.reduce((a, b) => a + b, 0)
+  const sxy = xs.reduce((a, b, i) => a + b * ys[i], 0)
+  const sxx = xs.reduce((a, b) => a + b * b, 0)
+  const denom = n * sxx - sx * sx
+  if (denom === 0) return null
+  const slope = (n * sxy - sx * sy) / denom
+  const intercept = (sy - slope * sx) / n
+  return { slope, intercept }
+}
+
 /** 全ゲームを共有X軸として累積スコアを描画するチャート */
 export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height = 360 }: Props) {
-  // プレイヤー表示トグル
   const [hiddenPlayers, setHiddenPlayers] = useState<Set<string>>(new Set())
+  const [showRegression, setShowRegression] = useState(false)
 
-  const togglePlayer = (name: string) => {
+  const togglePlayer = (name: string) =>
     setHiddenPlayers((prev) => {
       const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
+      next.has(name) ? next.delete(name) : next.add(name)
       return next
     })
-  }
 
   // 各プレイヤーの最後に参加したゲームインデックスを事前計算
   const lastGameIdx = useMemo(() => {
@@ -50,10 +55,32 @@ export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height 
     return map
   }, [games, playerNames])
 
+  // 回帰直線のパラメータを計算
+  const regressions = useMemo(() => {
+    if (!showRegression) return {}
+    const cumAt: Record<string, number> = {}
+    const points: Record<string, { x: number; y: number }[]> = {}
+
+    games.forEach((game, idx) => {
+      for (const name of playerNames) {
+        const result = game.players[name]
+        if (result !== undefined) {
+          cumAt[name] = (cumAt[name] ?? 0) + result.score
+          if (!points[name]) points[name] = []
+          points[name].push({ x: idx + 1, y: Math.round(cumAt[name] * 10) / 10 })
+        }
+      }
+    })
+
+    const result: Record<string, { slope: number; intercept: number } | null> = {}
+    for (const name of playerNames) {
+      if (!points[name] || points[name].length < 2) { result[name] = null; continue }
+      result[name] = linearRegression(points[name].map((p) => p.x), points[name].map((p) => p.y))
+    }
+    return result
+  }, [games, playerNames, showRegression])
+
   // チャートデータ生成
-  // ・参加したゲームでスコアを累積
-  // ・参加していない中間ゲームは最後の値を保持（フラットな線）
-  // ・最終参加ゲーム以降は undefined → 線がそこで終わる
   const data = useMemo(() => {
     const cumScores: Record<string, number> = {}
     return games.map((game, idx) => {
@@ -61,32 +88,34 @@ export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height 
       for (const name of playerNames) {
         const result = game.players[name]
         if (result !== undefined) {
-          // このゲームに参加 → スコアを加算
           cumScores[name] = (cumScores[name] ?? 0) + result.score
           point[name] = Math.round(cumScores[name] * 10) / 10
         } else if (cumScores[name] !== undefined && idx <= (lastGameIdx[name] ?? -1)) {
-          // 途中欠席だが最終参加前 → フラットに保持
+          // 途中欠席：最終参加前はフラット
           point[name] = Math.round(cumScores[name] * 10) / 10
         }
-        // 最終参加より後 → point[name] = undefined → 線が終わる
+        // 最終参加より後 → undefined → 線が終わる
+
+        // 回帰直線の値
+        if (showRegression) {
+          const reg = regressions[name]
+          if (reg) {
+            point[`${name}_trend`] = Math.round((reg.slope * (idx + 1) + reg.intercept) * 10) / 10
+          }
+        }
       }
       return point
     })
-  }, [games, playerNames, lastGameIdx])
+  }, [games, playerNames, lastGameIdx, showRegression, regressions])
 
-  // ブック境界：表示するラベルを間引く
-  // ・先頭 (startIndex=0) は線なし
-  // ・ゲーム数に対して最大15本のラベルを均等に表示
+  // ブック境界ラベルを間引く
   const { boundaryLines, labeledSet } = useMemo(() => {
     const total = games.length
     const minSpacing = Math.max(20, Math.floor(total / 12))
-
-    // 重複日付を除いた境界一覧（先頭除く）
     const deduped = bookBoundaries.filter((b, i, arr) => {
       if (b.startIndex === 0) return false
       return arr.findIndex((x) => x.date === b.date) === i
     })
-
     const labeled = new Set<number>()
     let lastLabeled = -Infinity
     for (const b of deduped) {
@@ -95,48 +124,54 @@ export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height 
         lastLabeled = b.startIndex
       }
     }
-
     return { boundaryLines: deduped, labeledSet: labeled }
   }, [bookBoundaries, games.length])
 
+  const showToggle = playerNames.length > 4
+
   return (
     <div className="space-y-3">
-      {/* プレイヤー表示トグル（人数が多いときに便利） */}
-      {playerNames.length > 4 && (
-        <div className="flex flex-wrap gap-1.5">
-          <span className="text-xs text-slate-500 self-center mr-1">表示：</span>
-          {playerNames.map((name, i) => {
-            const hidden = hiddenPlayers.has(name)
-            const color = PLAYER_COLORS[i % PLAYER_COLORS.length]
-            return (
-              <button
-                key={name}
-                onClick={() => togglePlayer(name)}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
-                  hidden
-                    ? 'border-[#2d4a6a] text-slate-600 bg-transparent'
-                    : 'border-transparent text-white'
-                }`}
-                style={hidden ? {} : { backgroundColor: color + '33', borderColor: color + '88' }}
-              >
-                <span
-                  className="inline-block w-2 h-2 rounded-full"
-                  style={{ backgroundColor: hidden ? '#4a6080' : color }}
-                />
-                {name}
+      {/* コントロールバー */}
+      <div className="flex items-center gap-4 flex-wrap justify-between">
+        {/* プレイヤー表示トグル */}
+        {showToggle && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-slate-500">表示：</span>
+            {playerNames.map((name, i) => {
+              const hidden = hiddenPlayers.has(name)
+              const color = PLAYER_COLORS[i % PLAYER_COLORS.length]
+              return (
+                <button
+                  key={name}
+                  onClick={() => togglePlayer(name)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
+                    hidden ? 'border-[#2d4a6a] text-slate-600' : 'text-white'
+                  }`}
+                  style={hidden ? {} : { backgroundColor: color + '28', borderColor: color + '88' }}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: hidden ? '#4a6080' : color }} />
+                  {name}
+                </button>
+              )
+            })}
+            {hiddenPlayers.size > 0 && (
+              <button onClick={() => setHiddenPlayers(new Set())} className="text-xs text-[#d4af37] hover:underline">
+                全員表示
               </button>
-            )
-          })}
-          {hiddenPlayers.size > 0 && (
-            <button
-              onClick={() => setHiddenPlayers(new Set())}
-              className="text-xs text-[#d4af37] hover:underline self-center ml-1"
-            >
-              全員表示
-            </button>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+
+        {/* 回帰直線トグル */}
+        <button
+          onClick={() => setShowRegression((v) => !v)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-colors ${
+            showRegression ? 'bg-[#d4af37]/20 border border-[#d4af37]/60 text-[#d4af37]' : 'card text-slate-500 hover:border-[#d4af37]/40 hover:text-slate-300'
+          }`}
+        >
+          📈 トレンド線
+        </button>
+      </div>
 
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data} margin={{ top: 8, right: 24, left: 0, bottom: 5 }}>
@@ -156,15 +191,14 @@ export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height 
               const boundary = [...bookBoundaries].reverse().find((b) => b.startIndex <= idx)
               return `対局 #${v}　📅 ${boundary?.date ?? ''}`
             }}
-            formatter={(value: number, name: string) => [
-              `${value > 0 ? '+' : ''}${value.toFixed(1)}`,
-              name,
-            ]}
+            formatter={(value: number, name: string) => {
+              if (String(name).endsWith('_trend')) return null as unknown as [string, string]
+              return [`${value > 0 ? '+' : ''}${value.toFixed(1)}`, String(name)]
+            }}
           />
-          <Legend wrapperStyle={{ color: '#8899aa', display: 'none' }} />
+          <Legend wrapperStyle={{ display: 'none' }} />
           <ReferenceLine y={0} stroke="#4a6080" strokeDasharray="4 4" />
 
-          {/* ブック境界ライン：ラベルは間引いて表示 */}
           {boundaryLines.map((b) => (
             <ReferenceLine
               key={`${b.startIndex}-${b.date}`}
@@ -174,18 +208,13 @@ export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height 
               strokeDasharray="4 3"
               label={
                 labeledSet.has(b.startIndex)
-                  ? {
-                      value: b.date,
-                      position: 'insideTopRight',
-                      fill: '#d4af37',
-                      fontSize: 9,
-                      opacity: 0.75,
-                    }
+                  ? { value: b.date, position: 'insideTopRight', fill: '#d4af37', fontSize: 9, opacity: 0.75 }
                   : undefined
               }
             />
           ))}
 
+          {/* 実績ライン */}
           {playerNames.map((name, i) => (
             <Line
               key={name}
@@ -199,6 +228,25 @@ export function ScoreTimelineChart({ games, playerNames, bookBoundaries, height 
               hide={hiddenPlayers.has(name)}
             />
           ))}
+
+          {/* 回帰直線（トレンド線）*/}
+          {showRegression &&
+            playerNames.map((name, i) => (
+              <Line
+                key={`${name}_trend`}
+                type="linear"
+                dataKey={`${name}_trend`}
+                stroke={PLAYER_COLORS[i % PLAYER_COLORS.length]}
+                strokeWidth={hiddenPlayers.has(name) ? 0 : 1}
+                strokeDasharray="8 4"
+                strokeOpacity={0.6}
+                dot={false}
+                activeDot={false}
+                hide={hiddenPlayers.has(name)}
+                legendType="none"
+                connectNulls
+              />
+            ))}
         </LineChart>
       </ResponsiveContainer>
     </div>

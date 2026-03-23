@@ -18,24 +18,22 @@ import { Dashboard } from './pages/Dashboard'
 import { PlayerDetail } from './pages/PlayerDetail'
 import { GamesPage } from './pages/GamesPage'
 import { HeadToHead } from './pages/HeadToHead'
-import { LayoutDashboard, List, Upload, Loader2, Swords } from 'lucide-react'
+import { MonthlyStats } from './pages/MonthlyStats'
+import { LayoutDashboard, List, Upload, Loader2, Swords, BarChart2 } from 'lucide-react'
 
-type Tab = 'dashboard' | 'games' | 'h2h' | 'upload'
+type Tab = 'dashboard' | 'games' | 'h2h' | 'monthly' | 'upload'
 type View = { tab: Tab; player?: string }
 
 function booksToMahjongData(books: StoredBook[]): MahjongData[] {
-  return books.map((book) => {
-    const stats = computeStats(book.players, book.games)
-    return {
-      id: book.id,
-      games: book.games,
-      players: book.players,
-      stats,
-      fileName: book.fileName,
-      date: book.date,
-      bookBoundaries: [],
-    }
-  })
+  return books.map((book) => ({
+    id: book.id,
+    games: book.games,
+    players: book.players,
+    stats: computeStats(book.players, book.games),
+    fileName: book.fileName,
+    date: book.date,
+    bookBoundaries: [],
+  }))
 }
 
 export default function App() {
@@ -45,7 +43,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<View>({ tab: 'upload' })
 
-  // localStorage から初期ロード
   useEffect(() => {
     const stored = loadStoredBooks()
     const aliases = loadNameAliases()
@@ -55,38 +52,34 @@ export default function App() {
   }, [])
 
   const datasets = booksToMahjongData(books)
-  // 名前エイリアスを適用してマージ（日付順ソート含む）
   const merged = datasets.length > 0 ? mergeData(datasets, nameAliases) : null
   const hasData = merged !== null && merged.games.length > 0
 
-  const handleAddBook = useCallback(
-    async (file: File, overwrite: boolean) => {
-      setLoading(true)
-      setError(null)
-      try {
-        const result = await parseExcelFile(file)
-        const newBook: StoredBook = {
-          id: result.id,
-          fileName: result.fileName,
-          date: result.date,
-          games: result.games,
-          players: result.players,
-        }
-        setBooks((prev) => {
-          const next = overwrite ? replaceBook(prev, newBook) : addBook(prev, newBook)
-          saveBooks(next)
-          return next
-        })
-        if (view.tab === 'upload') setView({ tab: 'dashboard' })
-      } catch (e) {
-        setError('Excelファイルの読み込みに失敗しました。形式を確認してください。')
-        console.error(e)
-      } finally {
-        setLoading(false)
+  const handleAddBook = useCallback(async (file: File, overwrite: boolean) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await parseExcelFile(file)
+      const newBook: StoredBook = {
+        id: result.id,
+        fileName: result.fileName,
+        date: result.date,
+        games: result.games,
+        players: result.players,
       }
-    },
-    [view.tab],
-  )
+      setBooks((prev) => {
+        const next = overwrite ? replaceBook(prev, newBook) : addBook(prev, newBook)
+        saveBooks(next)
+        return next
+      })
+      if (view.tab === 'upload') setView({ tab: 'dashboard' })
+    } catch (e) {
+      setError('Excelファイルの読み込みに失敗しました。形式を確認してください。')
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }, [view.tab])
 
   const handleRemoveBook = useCallback((id: string) => {
     setBooks((prev) => {
@@ -107,9 +100,22 @@ export default function App() {
     setNameAliases(aliases)
   }, [])
 
+  const navBtn = (tab: Tab, label: string, icon: React.ReactNode) => (
+    <button
+      onClick={() => setView({ tab })}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+        view.tab === tab && !view.player
+          ? 'bg-[#d4af37] text-black font-bold'
+          : 'text-slate-400 hover:text-white hover:bg-[#1e2d3d]'
+      }`}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  )
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <header className="border-b border-[#2d4a6a] bg-[#0f1923]/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -118,49 +124,19 @@ export default function App() {
               <h1 className="font-bold text-lg leading-tight text-[#d4af37]">麻雀成績管理</h1>
               {merged && (
                 <p className="text-xs text-slate-500">
-                  {merged.games.length}局 / {merged.players.filter((p) => merged.stats[p]?.games > 0).length}名 /{' '}
-                  {books.length}ブック
+                  {merged.games.length}局 / {merged.players.filter((p) => merged.stats[p]?.games > 0).length}名 / {books.length}ブック
                 </p>
               )}
             </div>
           </div>
 
-          <nav className="flex gap-1 ml-auto">
+          <nav className="flex gap-1 ml-auto flex-wrap justify-end">
             {hasData && (
               <>
-                <button
-                  onClick={() => setView({ tab: 'dashboard' })}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    view.tab === 'dashboard' && !view.player
-                      ? 'bg-[#d4af37] text-black font-bold'
-                      : 'text-slate-400 hover:text-white hover:bg-[#1e2d3d]'
-                  }`}
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  <span className="hidden sm:inline">ダッシュボード</span>
-                </button>
-                <button
-                  onClick={() => setView({ tab: 'games' })}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    view.tab === 'games'
-                      ? 'bg-[#d4af37] text-black font-bold'
-                      : 'text-slate-400 hover:text-white hover:bg-[#1e2d3d]'
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                  <span className="hidden sm:inline">対局一覧</span>
-                </button>
-                <button
-                  onClick={() => setView({ tab: 'h2h' })}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                    view.tab === 'h2h'
-                      ? 'bg-[#d4af37] text-black font-bold'
-                      : 'text-slate-400 hover:text-white hover:bg-[#1e2d3d]'
-                  }`}
-                >
-                  <Swords className="w-4 h-4" />
-                  <span className="hidden sm:inline">直対</span>
-                </button>
+                {navBtn('dashboard', 'ダッシュボード', <LayoutDashboard className="w-4 h-4" />)}
+                {navBtn('games', '対局一覧', <List className="w-4 h-4" />)}
+                {navBtn('h2h', '直対', <Swords className="w-4 h-4" />)}
+                {navBtn('monthly', '月次', <BarChart2 className="w-4 h-4" />)}
               </>
             )}
             <button
@@ -185,7 +161,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
         {loading && (
           <div className="flex items-center justify-center py-20 gap-3 text-[#d4af37]">
@@ -210,7 +185,6 @@ export default function App() {
                 データはブラウザに保存されるので、次回以降も継続して利用できます
               </p>
             </div>
-
             <BookManager
               books={books}
               onAddBook={handleAddBook}
@@ -218,21 +192,11 @@ export default function App() {
               onClearAll={handleClearAll}
               loading={loading}
             />
-
-            {/* 名前の表記ゆれ設定 */}
-            <NameSettings
-              books={books}
-              aliases={nameAliases}
-              onSave={handleSaveAliases}
-            />
-
+            <NameSettings books={books} aliases={nameAliases} onSave={handleSaveAliases} />
             {hasData && (
               <p className="text-center text-slate-500 text-sm">
                 現在{books.length}ブック / {merged?.games.length}局 読み込み済 —{' '}
-                <button
-                  onClick={() => setView({ tab: 'dashboard' })}
-                  className="text-[#d4af37] hover:underline"
-                >
+                <button onClick={() => setView({ tab: 'dashboard' })} className="text-[#d4af37] hover:underline">
                   ダッシュボードへ
                 </button>
               </p>
@@ -241,10 +205,7 @@ export default function App() {
         )}
 
         {!loading && hasData && merged && view.tab === 'dashboard' && !view.player && (
-          <Dashboard
-            data={merged}
-            onSelectPlayer={(name) => setView({ tab: 'dashboard', player: name })}
-          />
+          <Dashboard data={merged} onSelectPlayer={(name) => setView({ tab: 'dashboard', player: name })} />
         )}
 
         {!loading && hasData && merged && view.tab === 'dashboard' && view.player && (
@@ -255,13 +216,9 @@ export default function App() {
           />
         )}
 
-        {!loading && hasData && merged && view.tab === 'games' && (
-          <GamesPage data={merged} />
-        )}
-
-        {!loading && hasData && merged && view.tab === 'h2h' && (
-          <HeadToHead data={merged} />
-        )}
+        {!loading && hasData && merged && view.tab === 'games' && <GamesPage data={merged} />}
+        {!loading && hasData && merged && view.tab === 'h2h' && <HeadToHead data={merged} />}
+        {!loading && hasData && merged && view.tab === 'monthly' && <MonthlyStats data={merged} />}
       </main>
 
       <footer className="border-t border-[#2d4a6a] py-3 text-center text-xs text-slate-600">

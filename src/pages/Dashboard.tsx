@@ -1,34 +1,84 @@
+import { useMemo, useState } from 'react'
 import type { MahjongData } from '../types'
+import { computeStats } from '../utils/excelParser'
+import { exportGamesCsv, exportStatsCsv } from '../utils/csvExport'
 import { PlayerCard } from '../components/PlayerCard'
+import { ScoreLineChart } from '../components/ScoreLineChart'
 import { ScoreTimelineChart } from '../components/ScoreTimelineChart'
 import { StatCard } from '../components/StatCard'
-import { Trophy, TrendingUp, Users, Gamepad2 } from 'lucide-react'
+import { DateRangeFilter, type DateRange } from '../components/DateRangeFilter'
+import { Trophy, TrendingUp, Users, Gamepad2, Download, ChevronDown } from 'lucide-react'
 
 interface Props {
   data: MahjongData
   onSelectPlayer: (name: string) => void
 }
 
+type ChartMode = 'count' | 'timeline'
+
 export function Dashboard({ data, onSelectPlayer }: Props) {
-  const statsArr = data.players
-    .map((p) => data.stats[p])
+  const [chartMode, setChartMode] = useState<ChartMode>('count')
+  const [dateRange, setDateRange] = useState<DateRange>({ start: '', end: '' })
+  const [showExport, setShowExport] = useState(false)
+
+  // 期間フィルター適用後のデータを計算
+  const filtered = useMemo(() => {
+    const hasFilter = dateRange.start || dateRange.end
+    if (!hasFilter) return data
+
+    const games = data.games.filter((g) => {
+      if (!g.date) return true
+      if (dateRange.start && g.date < dateRange.start) return false
+      if (dateRange.end && g.date > dateRange.end) return false
+      return true
+    })
+    const stats = computeStats(data.players, games)
+    const bookBoundaries = data.bookBoundaries.filter((b) => {
+      if (dateRange.start && b.date !== '日付不明' && b.date < dateRange.start) return false
+      if (dateRange.end && b.date !== '日付不明' && b.date > dateRange.end) return false
+      return true
+    })
+    return { ...data, games, stats, bookBoundaries }
+  }, [data, dateRange])
+
+  const statsArr = filtered.players
+    .map((p) => filtered.stats[p])
     .filter((s) => s && s.games > 0)
     .sort((a, b) => b.totalScore - a.totalScore)
 
   const leader = statsArr[0]
-  const totalGames = data.games.length
+  const totalGames = filtered.games.length
   const activePlayers = statsArr.length
-  const bookCount = data.bookBoundaries.length
+  const bookCount = filtered.bookBoundaries.length
+
+  // 日付の最小・最大を取得（フィルター入力用）
+  const { minDate, maxDate } = useMemo(() => {
+    const dates = data.games.map((g) => g.date).filter(Boolean) as string[]
+    return {
+      minDate: dates.length > 0 ? dates.reduce((a, b) => (a < b ? a : b)) : undefined,
+      maxDate: dates.length > 0 ? dates.reduce((a, b) => (a > b ? a : b)) : undefined,
+    }
+  }, [data.games])
+
+  const isFiltered = dateRange.start || dateRange.end
 
   return (
     <div className="space-y-6">
+      {/* 期間フィルター */}
+      <DateRangeFilter
+        range={dateRange}
+        onChange={setDateRange}
+        minDate={minDate}
+        maxDate={maxDate}
+      />
+
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           label="総対局数"
           value={totalGames}
-          sub={`${bookCount}ブック`}
-          color="gold"
+          sub={isFiltered ? 'フィルター適用中' : `${bookCount}ブック`}
+          color={isFiltered ? 'blue' : 'gold'}
         />
         <StatCard label="参加プレイヤー" value={`${activePlayers}名`} color="blue" />
         {leader && (
@@ -49,38 +99,89 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
         )}
       </div>
 
-      {/* 累積スコア推移（共有タイムライン） */}
+      {/* 累積スコアチャート */}
       {statsArr.length > 0 && (
         <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-[#d4af37]" />
               <h2 className="font-bold text-lg">累積スコア推移</h2>
             </div>
-            {bookCount > 1 && (
-              <span className="text-xs text-slate-500 flex items-center gap-1">
-                <span className="inline-block w-6 h-px border-t border-dashed border-[#d4af37] opacity-70" />
-                = ブック境界
-              </span>
-            )}
+
+            {/* チャートモード切替 */}
+            <div className="flex items-center gap-1 bg-[#162535] rounded-lg p-1">
+              <button
+                onClick={() => setChartMode('count')}
+                className={`px-3 py-1 rounded text-xs transition-colors ${
+                  chartMode === 'count'
+                    ? 'bg-[#d4af37] text-black font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                打数（人別）
+              </button>
+              <button
+                onClick={() => setChartMode('timeline')}
+                className={`px-3 py-1 rounded text-xs transition-colors ${
+                  chartMode === 'timeline'
+                    ? 'bg-[#d4af37] text-black font-bold'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                日付（全体）
+              </button>
+            </div>
           </div>
-          <ScoreTimelineChart
-            games={data.games}
-            playerNames={statsArr.map((s) => s.name)}
-            bookBoundaries={data.bookBoundaries}
-          />
+
+          {chartMode === 'count' ? (
+            <ScoreLineChart players={statsArr} />
+          ) : (
+            <ScoreTimelineChart
+              games={filtered.games}
+              playerNames={statsArr.map((s) => s.name)}
+              bookBoundaries={filtered.bookBoundaries}
+            />
+          )}
         </div>
       )}
 
-      {/* Player Rankings */}
+      {/* プレイヤーランキング */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
           <Trophy className="w-5 h-5 text-[#d4af37]" />
           <h2 className="font-bold text-lg">プレイヤーランキング</h2>
           <span className="text-slate-500 text-sm ml-auto flex items-center gap-1">
             <Users className="w-4 h-4" />
             クリックで詳細表示
           </span>
+
+          {/* CSVエクスポート */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExport((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs card hover:border-[#d4af37]/50 text-slate-400 hover:text-white transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              CSV出力
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {showExport && (
+              <div className="absolute right-0 top-full mt-1 card rounded-lg overflow-hidden z-20 min-w-[160px] shadow-xl">
+                <button
+                  onClick={() => { exportGamesCsv(filtered); setShowExport(false) }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-[#243447] transition-colors"
+                >
+                  📋 対局データ CSV
+                </button>
+                <button
+                  onClick={() => { exportStatsCsv(filtered); setShowExport(false) }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-[#243447] transition-colors border-t border-[#2d4a6a]"
+                >
+                  📊 成績サマリー CSV
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {statsArr.map((s, i) => (
@@ -89,7 +190,7 @@ export function Dashboard({ data, onSelectPlayer }: Props) {
         </div>
       </div>
 
-      {/* Rank Distribution Overview */}
+      {/* 着順分布比較テーブル */}
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Gamepad2 className="w-5 h-5 text-[#d4af37]" />

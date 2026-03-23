@@ -2,17 +2,12 @@ import type { MahjongData } from '../types'
 import { StatCard } from '../components/StatCard'
 import { ScoreLineChart } from '../components/ScoreLineChart'
 import { RankDistributionChart } from '../components/RankDistributionChart'
+import { RollingWinRateChart } from '../components/RollingWinRateChart'
 import { GameHistoryTable } from '../components/GameHistoryTable'
-import { ArrowLeft, TrendingUp, BarChart2, List } from 'lucide-react'
+import { ArrowLeft, TrendingUp, BarChart2, List, Activity } from 'lucide-react'
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ReferenceLine,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ReferenceLine, ResponsiveContainer,
 } from 'recharts'
 
 interface Props {
@@ -21,9 +16,17 @@ interface Props {
   onBack: () => void
 }
 
+const PLAYER_COLORS = [
+  '#d4af37', '#4ade80', '#60a5fa', '#f87171',
+  '#a78bfa', '#fb923c', '#34d399', '#f472b6',
+]
+
 export function PlayerDetail({ playerName, data, onBack }: Props) {
   const stats = data.stats[playerName]
   if (!stats) return null
+
+  const playerIndex = data.players.indexOf(playerName)
+  const playerColor = PLAYER_COLORS[playerIndex % PLAYER_COLORS.length]
 
   const scoreData = stats.scoreHistory.map((s, i) => ({
     game: stats.gameIndices[i],
@@ -36,7 +39,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* ヘッダー */}
       <div className="flex items-center gap-4">
         <button
           onClick={onBack}
@@ -57,13 +60,13 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
         </div>
       </div>
 
-      {/* Key Stats */}
+      {/* 主要スタッツ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="対局数" value={stats.games} color="blue" />
         <StatCard
           label="平均着順"
           value={stats.avgRank.toFixed(3)}
-          sub={`目標: 2.500以下`}
+          sub="目標: 2.500以下"
           color={stats.avgRank < 2.5 ? 'green' : 'red'}
         />
         <StatCard
@@ -91,7 +94,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
         />
       </div>
 
-      {/* Cumulative Score Chart */}
+      {/* 累積スコア推移 */}
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-[#d4af37]" />
@@ -100,7 +103,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
         <ScoreLineChart players={[stats]} />
       </div>
 
-      {/* Per-game Score Chart */}
+      {/* 各対局スコア */}
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <BarChart2 className="w-5 h-5 text-[#d4af37]" />
@@ -115,8 +118,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
               contentStyle={{ backgroundColor: '#1e2d3d', border: '1px solid #2d4a6a', borderRadius: 8 }}
               labelFormatter={(v) => `対局 #${v}`}
               formatter={(value: number) => [
-                `${value > 0 ? '+' : ''}${value.toFixed(1)}`,
-                'スコア',
+                `${value > 0 ? '+' : ''}${value.toFixed(1)}`, 'スコア',
               ]}
               labelStyle={{ color: '#d4af37' }}
             />
@@ -124,7 +126,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
             <Line
               type="monotone"
               dataKey="score"
-              stroke="#60a5fa"
+              stroke={playerColor}
               strokeWidth={2}
               dot={(props) => {
                 const { cx, cy, payload } = props as { cx: number; cy: number; payload: { score: number } }
@@ -144,7 +146,17 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
         </ResponsiveContainer>
       </div>
 
-      {/* Rank Distribution */}
+      {/* ローリング勝率トレンド（新機能） */}
+      <div className="card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="w-5 h-5 text-[#d4af37]" />
+          <h2 className="font-bold text-lg">勝率トレンド（移動平均）</h2>
+          <span className="text-xs text-slate-500 ml-1">— 直近N局の1着率・トップ率・4着率の推移</span>
+        </div>
+        <RollingWinRateChart stats={stats} color={playerColor} />
+      </div>
+
+      {/* 着順分布 */}
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <BarChart2 className="w-5 h-5 text-[#d4af37]" />
@@ -153,7 +165,7 @@ export function PlayerDetail({ playerName, data, onBack }: Props) {
         <RankDistributionChart stats={stats} />
       </div>
 
-      {/* Game History */}
+      {/* 対局履歴 */}
       <div className="card p-5">
         <div className="flex items-center gap-2 mb-4">
           <List className="w-5 h-5 text-[#d4af37]" />
