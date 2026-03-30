@@ -209,11 +209,11 @@ export function mergeData(datasets: MahjongData[], nameAliases: NameAliasMap = {
     return { id: 'merged', games: [], players: [], stats: {}, fileName: '', bookBoundaries: [] }
   }
 
-  // 日付昇順でソート（日付なしは末尾）
+  // 日付昇順でソート（日付なしは先頭）
   const sorted = [...datasets].sort((a, b) => {
     if (!a.date && !b.date) return 0
-    if (!a.date) return 1
-    if (!b.date) return -1
+    if (!a.date) return -1
+    if (!b.date) return 1
     return a.date.localeCompare(b.date)
   })
 

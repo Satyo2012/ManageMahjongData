@@ -79,12 +79,12 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-/** ブックを日付昇順でソート（日付なしは末尾） */
+/** ブックを日付昇順でソート（日付なしは先頭） */
 export function sortBooksByDate(books: StoredBook[]): StoredBook[] {
   return [...books].sort((a, b) => {
     if (!a.date && !b.date) return 0
-    if (!a.date) return 1
-    if (!b.date) return -1
+    if (!a.date) return -1
+    if (!b.date) return 1
     return a.date.localeCompare(b.date)
   })
 }
