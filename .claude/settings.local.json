@@ -12,7 +12,9 @@
       "mcp__Claude_Preview__preview_start",
       "Bash(where npm:*)",
       "Bash(where npx:*)",
-      "Bash(where node:*)"
+      "Bash(where node:*)",
+      "Bash(gh pr:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
