@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-29",
+  "exportedAt": "2026-07-27",
   "books": [
     {
       "id": "1774272231592-datr3ri",
@@ -29620,6 +29620,828 @@
       "players": [
         "菊田さん",
         "野本さん",
+        "志村さん",
+        "直江さん"
+      ]
+    },
+    {
+      "id": "1785143088050-xa6s04o",
+      "fileName": "麻雀集計表20260726.xlsx",
+      "date": "2026-07-26",
+      "games": [
+        {
+          "gameNo": 1,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 48600,
+              "score": 68.6
+            },
+            "野本さん": {
+              "rank": 4,
+              "points": 6400,
+              "score": -53.6
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 15500,
+              "score": -24.5
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 29500,
+              "score": 9.5
+            }
+          }
+        },
+        {
+          "gameNo": 2,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 32500,
+              "score": 12.5
+            },
+            "野本さん": {
+              "rank": 3,
+              "points": 15900,
+              "score": -24.1
+            },
+            "志村さん": {
+              "rank": 4,
+              "points": 4600,
+              "score": -55.4
+            },
+            "直江さん": {
+              "rank": 1,
+              "points": 47000,
+              "score": 67
+            }
+          }
+        },
+        {
+          "gameNo": 3,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 19300,
+              "score": -0.7
+            },
+            "野本さん": {
+              "rank": 1,
+              "points": 68300,
+              "score": 88.3
+            },
+            "志村さん": {
+              "rank": 4,
+              "points": -1100,
+              "score": -61.1
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 13500,
+              "score": -26.5
+            }
+          }
+        },
+        {
+          "gameNo": 4,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 3,
+              "points": 20300,
+              "score": -19.7
+            },
+            "野本さん": {
+              "rank": 4,
+              "points": 13100,
+              "score": -46.9
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 29400,
+              "score": 9.4
+            },
+            "直江さん": {
+              "rank": 1,
+              "points": 37200,
+              "score": 57.2
+            }
+          }
+        },
+        {
+          "gameNo": 5,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 37500,
+              "score": 57.5
+            },
+            "野本さん": {
+              "rank": 4,
+              "points": 18800,
+              "score": -41.2
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 22500,
+              "score": 2.5
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 21200,
+              "score": -18.8
+            }
+          }
+        },
+        {
+          "gameNo": 6,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 23600,
+              "score": 3.6
+            },
+            "野本さん": {
+              "rank": 4,
+              "points": 16400,
+              "score": -43.6
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 39000,
+              "score": 59
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 21000,
+              "score": -19
+            }
+          }
+        },
+        {
+          "gameNo": 7,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 40700,
+              "score": 60.7
+            },
+            "野本さん": {
+              "rank": 2,
+              "points": 25800,
+              "score": 5.8
+            },
+            "志村さん": {
+              "rank": 4,
+              "points": 9800,
+              "score": -50.2
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 23700,
+              "score": -16.3
+            }
+          }
+        },
+        {
+          "gameNo": 8,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": -600,
+              "score": -60.6
+            },
+            "野本さん": {
+              "rank": 1,
+              "points": 39600,
+              "score": 59.6
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 23800,
+              "score": -16.2
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 37200,
+              "score": 17.2
+            }
+          }
+        },
+        {
+          "gameNo": 9,
+          "date": "2026-07-26",
+          "fileName": "麻雀集計表20260726.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": 13200,
+              "score": -46.8
+            },
+            "野本さん": {
+              "rank": 1,
+              "points": 35600,
+              "score": 55.6
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 16800,
+              "score": -23.2
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 34400,
+              "score": 14.4
+            }
+          }
+        }
+      ],
+      "players": [
+        "菊田さん",
+        "野本さん",
+        "志村さん",
+        "直江さん"
+      ]
+    },
+    {
+      "id": "1785143088205-930ihr2",
+      "fileName": "麻雀集計表20260719.xlsx",
+      "date": "2026-07-19",
+      "games": [
+        {
+          "gameNo": 1,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": -9300,
+              "score": -69.3
+            },
+            "川原田さん": {
+              "rank": 1,
+              "points": 38700,
+              "score": 58.7
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 35900,
+              "score": 15.9
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 34700,
+              "score": -5.3
+            }
+          }
+        },
+        {
+          "gameNo": 2,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": 17000,
+              "score": -43
+            },
+            "川原田さん": {
+              "rank": 1,
+              "points": 33800,
+              "score": 53.8
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 25700,
+              "score": 5.7
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 23500,
+              "score": -16.5
+            }
+          }
+        },
+        {
+          "gameNo": 3,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 3,
+              "points": 3400,
+              "score": -36.6
+            },
+            "川原田さん": {
+              "rank": 2,
+              "points": 45000,
+              "score": 25
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 48500,
+              "score": 68.5
+            },
+            "直江さん": {
+              "rank": 4,
+              "points": 3100,
+              "score": -56.9
+            }
+          }
+        },
+        {
+          "gameNo": 4,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 33200,
+              "score": 13.2
+            },
+            "川原田さん": {
+              "rank": 4,
+              "points": -900,
+              "score": -60.9
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 28700,
+              "score": -11.3
+            },
+            "直江さん": {
+              "rank": 1,
+              "points": 39000,
+              "score": 59
+            }
+          }
+        },
+        {
+          "gameNo": 5,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 3,
+              "points": 16100,
+              "score": -23.9
+            },
+            "川原田さん": {
+              "rank": 4,
+              "points": 10500,
+              "score": -49.5
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 32200,
+              "score": 12.2
+            },
+            "直江さん": {
+              "rank": 1,
+              "points": 41200,
+              "score": 61.2
+            }
+          }
+        },
+        {
+          "gameNo": 6,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 37300,
+              "score": 17.3
+            },
+            "川原田さん": {
+              "rank": 3,
+              "points": 11600,
+              "score": -28.4
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 40600,
+              "score": 60.6
+            },
+            "直江さん": {
+              "rank": 4,
+              "points": 10500,
+              "score": -49.5
+            }
+          }
+        },
+        {
+          "gameNo": 7,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 46900,
+              "score": 66.9
+            },
+            "川原田さん": {
+              "rank": 3,
+              "points": 21600,
+              "score": -18.4
+            },
+            "志村さん": {
+              "rank": 4,
+              "points": -6900,
+              "score": -66.9
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 38400,
+              "score": 18.4
+            }
+          }
+        },
+        {
+          "gameNo": 8,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 51200,
+              "score": 31.2
+            },
+            "川原田さん": {
+              "rank": 4,
+              "points": -22100,
+              "score": -82.1
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 55800,
+              "score": 75.8
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 15100,
+              "score": -24.9
+            }
+          }
+        },
+        {
+          "gameNo": 9,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 54900,
+              "score": 74.9
+            },
+            "川原田さん": {
+              "rank": 4,
+              "points": -5200,
+              "score": -65.2
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 40100,
+              "score": 20.1
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 10200,
+              "score": -29.8
+            }
+          }
+        },
+        {
+          "gameNo": 10,
+          "date": "2026-07-19",
+          "fileName": "麻雀集計表20260719.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 30300,
+              "score": 10.3
+            },
+            "川原田さん": {
+              "rank": 3,
+              "points": 22600,
+              "score": -17.4
+            },
+            "志村さん": {
+              "rank": 4,
+              "points": -900,
+              "score": -60.9
+            },
+            "直江さん": {
+              "rank": 1,
+              "points": 48000,
+              "score": 68
+            }
+          }
+        }
+      ],
+      "players": [
+        "菊田さん",
+        "川原田さん",
+        "志村さん",
+        "直江さん"
+      ]
+    },
+    {
+      "id": "1785143088370-fomayfa",
+      "fileName": "麻雀集計表20260712.xlsx",
+      "date": "2026-07-12",
+      "games": [
+        {
+          "gameNo": 1,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 2,
+              "points": 28400,
+              "score": 8.4
+            },
+            "中島さん": {
+              "rank": 1,
+              "points": 35700,
+              "score": 55.7
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 20400,
+              "score": -19.6
+            },
+            "直江さん": {
+              "rank": 4,
+              "points": 15500,
+              "score": -44.5
+            }
+          }
+        },
+        {
+          "gameNo": 2,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 3,
+              "points": 19200,
+              "score": -20.8
+            },
+            "中島さん": {
+              "rank": 1,
+              "points": 40500,
+              "score": 60.5
+            },
+            "志村さん": {
+              "rank": 4,
+              "points": -100,
+              "score": -60.1
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 40400,
+              "score": 20.4
+            }
+          }
+        },
+        {
+          "gameNo": 3,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": -1100,
+              "score": -61.1
+            },
+            "中島さん": {
+              "rank": 2,
+              "points": 35400,
+              "score": 15.4
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 36800,
+              "score": 56.8
+            },
+            "直江さん": {
+              "rank": 3,
+              "points": 28900,
+              "score": -11.1
+            }
+          }
+        },
+        {
+          "gameNo": 4,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": -11300,
+              "score": -71.3
+            },
+            "中島さん": {
+              "rank": 2,
+              "points": 22800,
+              "score": 2.8
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 14700,
+              "score": -25.3
+            },
+            "直江さん": {
+              "rank": 1,
+              "points": 73800,
+              "score": 93.8
+            }
+          }
+        },
+        {
+          "gameNo": 5,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 41300,
+              "score": 61.3
+            },
+            "中島さん": {
+              "rank": 4,
+              "points": 5000,
+              "score": -55
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 22700,
+              "score": -17.3
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 31000,
+              "score": 11
+            }
+          }
+        },
+        {
+          "gameNo": 6,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 51200,
+              "score": 71.2
+            },
+            "中島さん": {
+              "rank": 3,
+              "points": 12300,
+              "score": -27.7
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 35700,
+              "score": 15.7
+            },
+            "直江さん": {
+              "rank": 4,
+              "points": 800,
+              "score": -59.2
+            }
+          }
+        },
+        {
+          "gameNo": 7,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 3,
+              "points": 21500,
+              "score": -18.5
+            },
+            "中島さん": {
+              "rank": 1,
+              "points": 35300,
+              "score": 55.3
+            },
+            "志村さん": {
+              "rank": 2,
+              "points": 22500,
+              "score": 2.5
+            },
+            "直江さん": {
+              "rank": 4,
+              "points": 20700,
+              "score": -39.3
+            }
+          }
+        },
+        {
+          "gameNo": 8,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 1,
+              "points": 53800,
+              "score": 73.8
+            },
+            "中島さん": {
+              "rank": 4,
+              "points": -2200,
+              "score": -62.2
+            },
+            "志村さん": {
+              "rank": 3,
+              "points": 19200,
+              "score": -20.8
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 29200,
+              "score": 9.2
+            }
+          }
+        },
+        {
+          "gameNo": 9,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 4,
+              "points": 8100,
+              "score": -51.9
+            },
+            "中島さん": {
+              "rank": 3,
+              "points": 18100,
+              "score": -21.9
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 37000,
+              "score": 57
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 36800,
+              "score": 16.8
+            }
+          }
+        },
+        {
+          "gameNo": 10,
+          "date": "2026-07-12",
+          "fileName": "麻雀集計表20260712.xlsx",
+          "players": {
+            "菊田さん": {
+              "rank": 3,
+              "points": 27800,
+              "score": -12.2
+            },
+            "中島さん": {
+              "rank": 4,
+              "points": 8300,
+              "score": -51.7
+            },
+            "志村さん": {
+              "rank": 1,
+              "points": 35000,
+              "score": 55
+            },
+            "直江さん": {
+              "rank": 2,
+              "points": 28900,
+              "score": 8.9
+            }
+          }
+        }
+      ],
+      "players": [
+        "菊田さん",
+        "中島さん",
         "志村さん",
         "直江さん"
       ]
