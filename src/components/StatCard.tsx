@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react'
+
 interface Props {
   label: string
-  value: string | number
-  sub?: string
+  value: ReactNode
+  sub?: ReactNode
   color?: 'gold' | 'green' | 'red' | 'blue' | 'default'
 }
 
@@ -15,10 +17,10 @@ const COLOR_MAP = {
 
 export function StatCard({ label, value, sub, color = 'default' }: Props) {
   return (
-    <div className="card p-4 flex flex-col gap-1">
-      <p className="text-xs text-slate-400 uppercase tracking-wider">{label}</p>
-      <p className={`text-2xl font-bold ${COLOR_MAP[color]}`}>{value}</p>
-      {sub && <p className="text-xs text-slate-500">{sub}</p>}
+    <div className="card p-4 flex flex-col gap-1 min-w-0">
+      <p className="text-xs text-slate-400 tracking-wider">{label}</p>
+      <p className={`text-2xl font-bold truncate ${COLOR_MAP[color]}`}>{value}</p>
+      {sub && <p className="text-xs text-slate-400">{sub}</p>}
     </div>
   )
 }

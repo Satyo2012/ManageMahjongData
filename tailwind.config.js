@@ -5,12 +5,15 @@ export default {
     extend: {
       colors: {
         mahjong: {
-          green: '#1a472a',
           gold: '#d4af37',
-          red: '#c0392b',
+          'gold-light': '#e6c348',
           dark: '#0f1923',
           card: '#1e2d3d',
+          panel: '#162535',
+          row: '#1a2838',
+          hover: '#243447',
           border: '#2d4a6a',
+          muted: '#4a6080',
         },
       },
     },
