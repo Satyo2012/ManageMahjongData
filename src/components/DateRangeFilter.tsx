@@ -1,89 +1,98 @@
-import { CalendarRange, X } from 'lucide-react'
-
-export interface DateRange {
-  start: string
-  end: string
-}
+import clsx from 'clsx'
+import { CalendarRange } from 'lucide-react'
+import { subtractMonths, todayIso } from '../domain/date'
+import { ALL_TIME, isRangeActive, type DateRange } from '../domain/filter'
 
 interface Props {
   range: DateRange
-  onChange: (r: DateRange) => void
+  onChange: (range: DateRange) => void
   minDate?: string
   maxDate?: string
+  /** 期間内の対局数 */
+  filteredCount: number
+  /** 期間指定時に除外される日付不明の対局数 */
+  undatedCount: number
 }
 
-export function DateRangeFilter({ range, onChange, minDate, maxDate }: Props) {
-  const hasFilter = range.start || range.end
+interface Preset {
+  label: string
+  range: (latest: string) => DateRange
+}
 
-  const presets = [
-    { label: '直近1ヶ月', months: 1 },
-    { label: '直近3ヶ月', months: 3 },
-    { label: '直近6ヶ月', months: 6 },
-    { label: '直近1年', months: 12 },
-  ]
+const PRESETS: Preset[] = [
+  { label: '全期間', range: () => ALL_TIME },
+  { label: '直近1ヶ月', range: (latest) => ({ start: subtractMonths(latest, 1), end: latest }) },
+  { label: '直近3ヶ月', range: (latest) => ({ start: subtractMonths(latest, 3), end: latest }) },
+  { label: '直近6ヶ月', range: (latest) => ({ start: subtractMonths(latest, 6), end: latest }) },
+  { label: '直近1年', range: (latest) => ({ start: subtractMonths(latest, 12), end: latest }) },
+  { label: '今年', range: (latest) => ({ start: `${latest.slice(0, 4)}-01-01`, end: latest }) },
+]
 
-  const applyPreset = (months: number) => {
-    const end = maxDate ?? new Date().toISOString().slice(0, 10)
-    const d = new Date(end)
-    d.setMonth(d.getMonth() - months)
-    onChange({ start: d.toISOString().slice(0, 10), end })
-  }
+const sameRange = (a: DateRange, b: DateRange) => a.start === b.start && a.end === b.end
+
+/** 全ページ共通の期間フィルター。「直近」は最新の対局日を基準にする */
+export function DateRangeFilter({ range, onChange, minDate, maxDate, filteredCount, undatedCount }: Props) {
+  const latest = maxDate ?? todayIso()
+  const active = isRangeActive(range)
 
   return (
     <div className="card px-4 py-3 space-y-2">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 text-slate-400 text-sm">
-          <CalendarRange className="w-4 h-4 text-[#d4af37]" />
-          <span className="font-medium text-slate-300">期間フィルター</span>
+      <div className="flex items-center gap-x-3 gap-y-2 flex-wrap">
+        <div className="flex items-center gap-1.5 text-sm">
+          <CalendarRange className="w-4 h-4 text-mahjong-gold" />
+          <span className="font-medium text-slate-200">期間</span>
         </div>
 
-        <div className="flex items-center gap-2 ml-2 flex-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
+          {PRESETS.map((preset) => {
+            const presetRange = preset.range(latest)
+            const selected = sameRange(range, presetRange)
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onChange(presetRange)}
+                className={clsx(
+                  'px-2.5 py-1 rounded-md text-xs border transition-colors',
+                  selected
+                    ? 'bg-mahjong-gold text-black font-bold border-mahjong-gold'
+                    : 'border-mahjong-border text-slate-300 hover:text-white hover:border-mahjong-gold/50',
+                )}
+              >
+                {preset.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
           <input
             type="date"
+            aria-label="開始日"
             value={range.start}
             min={minDate}
             max={range.end || maxDate}
             onChange={(e) => onChange({ ...range, start: e.target.value })}
-            className="bg-[#162535] border border-[#2d4a6a] rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-[#d4af37]/60 [color-scheme:dark]"
+            className="input"
           />
-          <span className="text-slate-500 text-sm">〜</span>
+          <span className="text-slate-400 text-sm">〜</span>
           <input
             type="date"
+            aria-label="終了日"
             value={range.end}
             min={range.start || minDate}
             max={maxDate}
             onChange={(e) => onChange({ ...range, end: e.target.value })}
-            className="bg-[#162535] border border-[#2d4a6a] rounded-lg px-2 py-1 text-sm text-white focus:outline-none focus:border-[#d4af37]/60 [color-scheme:dark]"
+            className="input"
           />
         </div>
-
-        {/* プリセットボタン */}
-        <div className="flex gap-1 flex-wrap">
-          {presets.map((p) => (
-            <button
-              key={p.months}
-              onClick={() => applyPreset(p.months)}
-              className="px-2 py-0.5 rounded text-xs card hover:border-[#d4af37]/50 text-slate-400 hover:text-white transition-colors"
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        {hasFilter && (
-          <button
-            onClick={() => onChange({ start: '', end: '' })}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-xs text-red-400 hover:text-red-300 border border-red-900/40 hover:border-red-700/60 transition-colors"
-          >
-            <X className="w-3 h-3" />
-            クリア
-          </button>
-        )}
       </div>
 
-      {hasFilter && (
-        <p className="text-xs text-[#d4af37]">
-          ⚡ フィルター適用中：全グラフ・集計が選択期間のデータのみで表示されます
+      {active && (
+        <p className="text-xs text-mahjong-gold">
+          {range.start || '最初'} 〜 {range.end || '最新'} の {filteredCount}局で集計中
+          {undatedCount > 0 && <span className="text-slate-400">（日付不明の {undatedCount}局は期間指定時に除外）</span>}
         </p>
       )}
     </div>

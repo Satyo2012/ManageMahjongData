@@ -1,90 +1,71 @@
-import type { Game, NameAliasMap } from '../types'
+import type { Book, NameAliasMap } from '../types'
 
-const STORAGE_KEY = 'mahjong_books_v1'
+/** ローカルモード（data.json が無い環境）でのブック・エイリアス */
+const BOOKS_KEY = 'mahjong_books_v1'
 const ALIAS_KEY = 'mahjong_name_aliases_v1'
+/** 共有データを元にした未共有の変更（下書き） */
+const DRAFT_KEY = 'mahjong_shared_draft_v1'
 
-export interface StoredBook {
-  id: string
-  fileName: string
-  date?: string
-  games: Game[]
-  players: string[]
+export interface SharedDraft {
+  /** 下書きの元になった共有データの署名。共有データが更新されたら下書きは破棄する */
+  baseSignature: string
+  books: Book[]
+  nameAliases: NameAliasMap
 }
 
-// ─── Books ───────────────────────────────────────────────
-
-export function loadStoredBooks(): StoredBook[] {
+function readJson<T>(key: string): T | undefined {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw) as StoredBook[]
-  } catch {
-    return []
-  }
-}
-
-export function saveBooks(books: StoredBook[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(books))
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : undefined
   } catch (e) {
-    console.error('localStorage への保存に失敗しました', e)
+    console.warn(`localStorage(${key}) の読み込みに失敗しました`, e)
+    return undefined
   }
 }
 
-export function addBook(books: StoredBook[], newBook: StoredBook): StoredBook[] {
-  const next = [...books, newBook]
-  saveBooks(next)
-  return next
-}
-
-export function removeBook(books: StoredBook[], id: string): StoredBook[] {
-  const next = books.filter((b) => b.id !== id)
-  saveBooks(next)
-  return next
-}
-
-export function replaceBook(books: StoredBook[], newBook: StoredBook): StoredBook[] {
-  const next = books.map((b) => (b.fileName === newBook.fileName ? newBook : b))
-  saveBooks(next)
-  return next
-}
-
-/** 全ブックを削除 */
-export function clearAllBooks(): void {
-  localStorage.removeItem(STORAGE_KEY)
-}
-
-// ─── Name Aliases ─────────────────────────────────────────
-
-export function loadNameAliases(): NameAliasMap {
+function writeJson(key: string, value: unknown): void {
   try {
-    const raw = localStorage.getItem(ALIAS_KEY)
-    return raw ? (JSON.parse(raw) as NameAliasMap) : {}
-  } catch {
-    return {}
-  }
-}
-
-export function saveNameAliases(aliases: NameAliasMap): void {
-  try {
-    localStorage.setItem(ALIAS_KEY, JSON.stringify(aliases))
+    localStorage.setItem(key, JSON.stringify(value))
   } catch (e) {
-    console.error('名前エイリアスの保存に失敗しました', e)
+    console.error(`localStorage(${key}) への保存に失敗しました`, e)
   }
 }
 
-// ─── Utilities ───────────────────────────────────────────
+function removeKey(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch (e) {
+    console.error(`localStorage(${key}) の削除に失敗しました`, e)
+  }
+}
+
+export function loadLocalBooks(): Book[] {
+  const books = readJson<Book[]>(BOOKS_KEY)
+  return Array.isArray(books) ? books : []
+}
+
+export function loadLocalAliases(): NameAliasMap {
+  return readJson<NameAliasMap>(ALIAS_KEY) ?? {}
+}
+
+export function saveLocal(books: Book[], aliases: NameAliasMap): void {
+  writeJson(BOOKS_KEY, books)
+  writeJson(ALIAS_KEY, aliases)
+}
+
+export function loadDraft(): SharedDraft | undefined {
+  const draft = readJson<SharedDraft>(DRAFT_KEY)
+  return draft && Array.isArray(draft.books) ? draft : undefined
+}
+
+export function saveDraft(draft: SharedDraft): void {
+  writeJson(DRAFT_KEY, draft)
+}
+
+export function clearDraft(): void {
+  removeKey(DRAFT_KEY)
+}
 
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-}
-
-/** ブックを日付昇順でソート（日付なしは先頭） */
-export function sortBooksByDate(books: StoredBook[]): StoredBook[] {
-  return [...books].sort((a, b) => {
-    if (!a.date && !b.date) return 0
-    if (!a.date) return -1
-    if (!b.date) return 1
-    return a.date.localeCompare(b.date)
-  })
 }

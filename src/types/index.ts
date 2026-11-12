@@ -11,6 +11,15 @@ export interface Game {
   players: Record<string, GameResult>
 }
 
+/** 1ファイル（1セッション）分の対局データ。localStorage / data.json の保存単位 */
+export interface Book {
+  id: string
+  fileName: string
+  date?: string
+  games: Game[]
+  players: string[]
+}
+
 export interface PlayerStats {
   name: string
   games: number
@@ -22,7 +31,8 @@ export interface PlayerStats {
   secondRate: number
   thirdRate: number
   fourthRate: number
-  topRate: number
+  /** 連帯率（1着 + 2着） */
+  top2Rate: number
   flyingCount: number
   flyingRate: number
   firstCount: number
@@ -32,27 +42,28 @@ export interface PlayerStats {
   scoreHistory: number[]
   cumulativeScoreHistory: number[]
   rankHistory: number[]
-  gameIndices: number[]
+  /** scoreHistory と同じ並びの対局日 */
+  dateHistory: (string | undefined)[]
 }
 
-/** ブック境界（時系列グラフ用）*/
+/** ブック境界（時系列グラフ・セッション集計用） */
 export interface BookBoundary {
-  /** merged games 配列における 0-based の開始インデックス */
+  /** games 配列における 0-based の開始インデックス */
   startIndex: number
-  date: string
+  gameCount: number
+  date?: string
   fileName: string
 }
 
 /** 名前の表記ゆれ正規化マップ: rawName → canonicalName */
 export type NameAliasMap = Record<string, string>
 
+/** 集計済みデータ。games は古い順（日付不明は最古扱いで先頭） */
 export interface MahjongData {
-  id: string
   games: Game[]
+  /** 対局数の多い順 */
   players: string[]
   stats: Record<string, PlayerStats>
-  fileName: string
-  date?: string
   bookBoundaries: BookBoundary[]
 }
 

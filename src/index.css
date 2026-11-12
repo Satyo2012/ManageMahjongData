@@ -4,35 +4,49 @@
 
 @layer base {
   body {
-    @apply bg-[#0f1923] text-white;
+    @apply bg-mahjong-dark text-white;
     font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
   }
+  :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-mahjong-gold;
+  }
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-[#0f1923];
+    @apply bg-mahjong-dark;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-[#2d4a6a] rounded-full;
+    @apply bg-mahjong-border rounded-full;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-[#1e2d3d] border border-[#2d4a6a] rounded-xl;
+    @apply bg-mahjong-card border border-mahjong-border rounded-xl;
   }
-  .badge-1st {
-    @apply bg-yellow-500 text-yellow-900 font-bold text-xs px-2 py-0.5 rounded-full;
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors
+      disabled:opacity-40 disabled:cursor-not-allowed;
   }
-  .badge-2nd {
-    @apply bg-slate-400 text-slate-900 font-bold text-xs px-2 py-0.5 rounded-full;
+  .btn-primary {
+    @apply btn bg-mahjong-gold text-black font-bold hover:bg-mahjong-gold-light;
   }
-  .badge-3rd {
-    @apply bg-amber-700 text-amber-100 font-bold text-xs px-2 py-0.5 rounded-full;
+  .btn-ghost {
+    @apply btn border border-mahjong-border bg-mahjong-card text-slate-300 hover:border-mahjong-gold/50 hover:text-white;
   }
-  .badge-4th {
-    @apply bg-red-900 text-red-200 font-bold text-xs px-2 py-0.5 rounded-full;
+  .btn-danger {
+    @apply btn bg-red-700 text-white hover:bg-red-600;
+  }
+  .input {
+    @apply bg-mahjong-panel border border-mahjong-border rounded-lg px-2 py-1 text-sm text-white
+      focus:outline-none focus:border-mahjong-gold/70 [color-scheme:dark];
+  }
+  .section-title {
+    @apply flex items-center gap-2 font-bold text-lg;
+  }
+  .table-head {
+    @apply bg-mahjong-panel text-slate-300 text-xs;
   }
 }
