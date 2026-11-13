@@ -18,6 +18,10 @@ export interface Book {
   date?: string
   games: Game[]
   players: string[]
+  /** Google ドライブから同期したファイルの ID（自動同期で更新を検知するため） */
+  driveFileId?: string
+  /** 同期時点の Google ドライブ上の更新日時 (RFC 3339) */
+  driveModifiedTime?: string
 }
 
 export interface PlayerStats {
