@@ -1,17 +1,9 @@
 import type { Book, NameAliasMap } from '../types'
-import { sortBooksByDate } from '../domain/books'
 import { todayIso } from '../domain/date'
+import { serializeSharedData, type SharedData } from '../domain/sharedDataFormat'
 import { downloadBlob } from './download'
 
 export const SHARED_DATA_FILE = 'data.json'
-const SHARED_DATA_VERSION = 1
-
-export interface SharedData {
-  version: number
-  exportedAt: string
-  books: Book[]
-  nameAliases: NameAliasMap
-}
 
 export interface FetchedSharedData {
   data: SharedData
@@ -31,14 +23,7 @@ function hashText(text: string): string {
 
 /** 共有用 data.json をダウンロード（public/ に置いて Git にコミットする） */
 export function exportSharedJson(books: Book[], nameAliases: NameAliasMap): void {
-  const payload: SharedData = {
-    version: SHARED_DATA_VERSION,
-    exportedAt: todayIso(),
-    // 日付順にしておくと Git の差分が追記中心になり確認しやすい
-    books: sortBooksByDate(books),
-    nameAliases,
-  }
-  const json = JSON.stringify(payload, null, 2) + '\n'
+  const json = serializeSharedData(books, nameAliases, todayIso())
   downloadBlob(new Blob([json], { type: 'application/json' }), SHARED_DATA_FILE)
 }
 

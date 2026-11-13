@@ -1,0 +1,74 @@
+# Google ドライブのフォルダにある麻雀集計表を public/data.json に取り込み、
+# 変更があれば main にコミットして本番用リポジトリにも push する（Vercel が自動で再デプロイ）。
+# 設定方法は docs/drive-sync.md を参照。
+name: Google ドライブ同期
+
+on:
+  schedule:
+    # 毎時17分（UTC）。GitHub の混雑を避けて00分を外している
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '確認のみ（data.json を更新しない）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: drive-sync
+  cancel-in-progress: false
+
+env:
+  # exportedAt を日本時間の日付にする
+  TZ: Asia/Tokyo
+  DEPLOY_REPO: Satyo2012/managemahjongmatasny
+
+jobs:
+  sync:
+    # このファイルは2つのリポジトリに push されるため、同期はこちらでだけ動かす
+    if: github.repository == 'Satyo2012/ManageMahjongData'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: ドライブから取り込み
+        id: sync
+        env:
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        run: npm run sync:drive -- ${{ inputs.dry_run && '--dry-run' || '' }}
+
+      # 取り込んだデータが壊れていないか、実データの回帰テストで確認してから反映する
+      - name: テスト
+        if: steps.sync.outputs.changed == 'true'
+        run: npm test
+
+      - name: コミットして push
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/data.json
+          git commit -m "data: Google ドライブから同期 ($(date +%Y-%m-%d))"
+          git push origin HEAD:main
+          if [ -z "$DEPLOY_REPO_TOKEN" ]; then
+            echo "::warning::DEPLOY_REPO_TOKEN が未設定のため本番用リポジトリには push していません"
+            exit 0
+          fi
+          git push "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/${DEPLOY_REPO}.git" HEAD:main

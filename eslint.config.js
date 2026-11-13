@@ -23,8 +23,8 @@ export default tseslint.config(
     },
   },
   {
-    // テストは Node の組み込みテストランナーで実行する
-    files: ['tests/**/*.ts'],
+    // テストと同期スクリプトは Node で実行する
+    files: ['tests/**/*.ts', 'scripts/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
 )
