@@ -31,3 +31,7 @@ yarn-error.log*
 # Excel data files (upload separately)
 data/*.xlsx
 /data.json
+
+# Google サービスアカウント鍵（Secrets に登録する。コミットしない）
+service-account*.json
+*-key.json
